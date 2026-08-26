@@ -1,5 +1,9 @@
 $ErrorActionPreference = 'Stop'
 $port = if ($args.Count -gt 0) { [int]$args[0] } else { 8080 }
+$matLauncher = Join-Path $PSScriptRoot 'tools\mat\mat\ParseHeapDump.bat'
+if (-not (Test-Path -LiteralPath $matLauncher)) {
+    & (Join-Path $PSScriptRoot 'setup-mat.ps1')
+}
 $listener = Get-NetTCPConnection -LocalPort $port -State Listen -ErrorAction SilentlyContinue | Select-Object -First 1
 if ($listener) {
     $ownerPid = $listener.OwningProcess

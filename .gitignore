@@ -3,5 +3,8 @@
 /captures/
 /tools/mat/
 /tools/mat.zip
+/tools/*.json
 /*.log
 /.edge-profile/
+/workspace/
+/.vscode/
