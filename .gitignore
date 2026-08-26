@@ -1,0 +1,7 @@
+/target/
+/out/
+/captures/
+/tools/mat/
+/tools/mat.zip
+/*.log
+/.edge-profile/
