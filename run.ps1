@@ -1,5 +1,9 @@
 $ErrorActionPreference = 'Stop'
 $port = if ($args.Count -gt 0) { [int]$args[0] } else { 8080 }
+$matLauncher = Join-Path $PSScriptRoot 'tools\mat\mat\ParseHeapDump.bat'
+if (-not (Test-Path -LiteralPath $matLauncher)) {
+    & (Join-Path $PSScriptRoot 'setup-mat.ps1')
+}
 $listener = Get-NetTCPConnection -LocalPort $port -State Listen -ErrorAction SilentlyContinue | Select-Object -First 1
 if ($listener) {
     $ownerPid = $listener.OwningProcess
@@ -20,12 +24,20 @@ if ($listener) {
 }
 
 $previousMavenOpts = $env:MAVEN_OPTS
-$compatibilityOptions = '--enable-native-access=ALL-UNNAMED --sun-misc-unsafe-memory-access=allow'
+$compatibilityOptions = '--enable-native-access=ALL-UNNAMED'
 $env:MAVEN_OPTS = if ($previousMavenOpts) { "$previousMavenOpts $compatibilityOptions" } else { $compatibilityOptions }
+$localMaven = Join-Path $PSScriptRoot 'tools\maven\apache-maven-3.9.16\bin\mvn.cmd'
+$maven = if (Test-Path -LiteralPath $localMaven) { $localMaven } else { 'mvn' }
 try {
-    mvn -q -DskipTests package
+    & $maven -q -DskipTests package
+    if ($LASTEXITCODE -ne 0) {
+        throw "Maven build failed with exit code $LASTEXITCODE."
+    }
 } finally {
     $env:MAVEN_OPTS = $previousMavenOpts
 }
 $dependencies = (Get-ChildItem target\dependency\*.jar | ForEach-Object FullName) -join ';'
 java --add-modules jdk.httpserver,jdk.attach,jdk.management.jfr -cp "target\classes;$dependencies" JvmPulseServer $port
+if ($LASTEXITCODE -ne 0) {
+    throw "JVM Pulse exited with code $LASTEXITCODE."
+}

@@ -2,6 +2,10 @@
 /out/
 /captures/
 /tools/mat/
+/tools/maven/
 /tools/mat.zip
+/tools/*.json
 /*.log
 /.edge-profile/
+/workspace/
+/.vscode/
